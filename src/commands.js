@@ -20,7 +20,7 @@ export async function removeCRA(ProjPath) {
 export async function installViteDependencies(ProjPath, language, installVitest) {
     console.log("📦✨ Fetching the essential Vite packages...");
 
-    let dependencies = 'vite @vitejs/plugin-react-swc vite-tsconfig-paths vite-plugin-svgr';
+    let dependencies = 'vite @vitejs/plugin-react-swc @vitejs/plugin-react vite-tsconfig-paths vite-plugin-svgr';
 
     // TypeScript-specific dependencies
     if (language === 'ts') {
@@ -62,7 +62,7 @@ export async function installViteDependencies(ProjPath, language, installVitest)
 }
 
 
-export async function createViteConfig(directory, language) {
+export async function createViteConfig(directory, language, outputDir) {
     let configFilename;
     let plugins;
     let imports;
@@ -77,19 +77,36 @@ export async function createViteConfig(directory, language) {
     }
     const configFilePath = path.join(directory, configFilename);
 
-    const configContent = `
+    const configContent = language === 'js' ? `
             ${imports}
             
             // https://vitejs.dev/config/
             export default defineConfig(() => {
               return {
                 build: {
-                  outDir: 'build',
+                  outDir: '${outputDir}', // Default output directory for production build
+                },
+                esbuild: {
+                    loader:  { '.js': 'jsx' }, // Tell esbuild to handle .js files as JSX 
                 },
                 plugins: ${plugins},
               };
             });
-            `;
+            ` :
+        `
+        ${imports}
+        
+        // https://vitejs.dev/config/
+        export default defineConfig({
+            plugins: ${plugins},
+            build: {
+                outDir: ${outputDir}, // Default output directory for production build
+            },
+            esbuild: {
+                loader:  { '.ts': 'tsx' }, // Tell esbuild to handle .ts files as TSX 
+            },
+        });
+        `
 
     // for typescript user option
     const tsconfigFilePath = path.join(directory, 'tsconfig.ts')
@@ -137,10 +154,15 @@ export async function updatingIndexHtml(projectPath, mainFile) {
         let updatedContent = content.replace(/%PUBLIC_URL%/g, '');
 
         // Updating content #TODO more robust parsing might be needed)
-        updatedContent = updatedContent.replace(
-            /<script.*<\/script>/i, // Basic regex to find script tag
-            `<script type="module" src="/src/${mainFile}"></script>`
-        );
+        const scriptTagRegex = /<script.*<\/script>/i;
+        updatedContent = scriptTagRegex.test(content) ?
+            updatedContent = updatedContent.replace(scriptTagRegex,
+                (match) => `<noscript>${match}</noscript>` + // Preserve noscript if found
+                    `<script type="module" src="/src/${mainFile}"></script>`
+            ) :
+            updatedContent.replace(/<\/body>/,
+                `<script type="module" src="/src/${mainFile}"></script></body>`
+            );
         // Writing the updated file
         fs.writeFileSync(destIndexHtml, updatedContent);
 

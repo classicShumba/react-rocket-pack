@@ -1,10 +1,14 @@
+import inquirer from "inquirer";
 import {
     confirmMigration,
     confirmVitestInstallation,
     determineLanguage,
     getDirectory,
     getMainReactFile,
-    getProjectName
+    getUserOutputDirectory,
+    getProjectName,
+    userOptions,
+    displaySummary
 } from "./userInputs.js";
 import {
     createViteConfig,
@@ -24,7 +28,7 @@ async function performMigration(options) {
             await installViteDependencies(options.directory, options.language);
 
             // 3. Create Vite Configuration
-            await createViteConfig(options.directory, options.language);
+            await createViteConfig(options.directory, options.language, options.outputDir);
 
             // 4 moving index.html
             await updatingIndexHtml(options.directory, options.mainFile)
@@ -41,11 +45,18 @@ async function performMigration(options) {
 
 
 export async function gatherInputsAndMigrate() {
-    const projectName = await getProjectName();
-    const directory = await getDirectory();
-    const language = await determineLanguage();
-    const mainFile = await getMainReactFile();
-    const installVitest = await confirmVitestInstallation();
+    userOptions.projectName = await getProjectName();
+    userOptions.directory = await getDirectory();
+    userOptions.language = await determineLanguage();
+    userOptions.mainFile = await getMainReactFile();
+    userOptions.outputDir = await getUserOutputDirectory();
+    userOptions.installVitest = await confirmVitestInstallation();
 
-    await performMigration({projectName, language, directory, mainFile, installVitest});
+    // displaying user's selected options
+    const options = userOptions
+
+    displaySummary(options)
+
+    await performMigration(options)
+
 }

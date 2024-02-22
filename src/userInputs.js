@@ -66,6 +66,18 @@ export async function getMainReactFile() {
     return answer.mainFile;
 }
 
+export async function getUserOutputDirectory() {
+    const answer = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'outputDir',
+            message: 'Enter the desired output directory (default is "build"):',
+            default: 'build'
+        }
+    ]);
+    return answer.outputDir;
+}
+
 // querying whether the user needs test package from vitest
 export async function confirmVitestInstallation() {
     const answer = await inquirer.prompt([
@@ -78,6 +90,15 @@ export async function confirmVitestInstallation() {
     ]);
     return answer.installVitest;
 }
+
+export const userOptions = {
+    projectName: null,
+    directory: null,
+    language: null,
+    mainFile: null,
+    outputDir: null,
+    installVitest: null,
+};
 
 
 // # TODO yet to implement user choice summary
@@ -93,13 +114,15 @@ export async function confirmVitestInstallation() {
 // userOptions.language = await determineLanguage();
 // userOptions.installVitest = await confirmVitestInstallation();
 
-// function displaySummary(options) {
-//     console.log("\n--- Migration Summary ---");
-//     console.log(`Project Name: ${options.projectName}`);
-//     console.log(`Project Directory: ${options.directory}`);
-//     console.log(`Language: ${options.language}`);
-//     console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}`);
-// }
+export function displaySummary(options) {
+    console.log("\n--- Migration Summary ---");
+    console.log(`Project Name: ${options.projectName}`);
+    console.log(`Project Directory: ${options.directory}`);
+    console.log(`Language: ${options.language}`);
+    console.log(`Main React File: ${options.mainFile}`);
+    console.log(`Desired Output Directory for Production: ${options.outputDir}`);
+    console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}\n`);
+}
 
 // ... after gathering all input
 // displaySummary(userOptions);
