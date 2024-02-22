@@ -1,0 +1,20 @@
+{
+  "name": "react-rocket-pack",
+  "version": "1.0.0",
+  "description": "This tool aids in migrating from Create-react-app to Vite",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "create-react-app",
+    "vite"
+  ],
+  "author": "classic_shumba",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "inquirer": "^9.2.15"
+  }
+}
