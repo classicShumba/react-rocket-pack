@@ -1,0 +1,14 @@
+# Logs, temporary files, etc.
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# IDE/Editor settings
+.vscode/
+.idea/
+
+# Output of your package build process
+dist/
+build/
