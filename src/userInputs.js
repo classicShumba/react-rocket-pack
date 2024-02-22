@@ -101,18 +101,6 @@ export const userOptions = {
 };
 
 
-// # TODO yet to implement user choice summary
-// const userOptions = {
-//     projectName: null,
-//     directory: null,
-//     language: null,
-//     installVitest: null,
-// };
-//
-// // ... Inside input functions
-// userOptions.projectName = await getProjectName();
-// userOptions.language = await determineLanguage();
-// userOptions.installVitest = await confirmVitestInstallation();
 
 export function displaySummary(options) {
     console.log("\n--- Migration Summary ---");
@@ -123,24 +111,4 @@ export function displaySummary(options) {
     console.log(`Desired Output Directory for Production: ${options.outputDir}`);
     console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}\n`);
 }
-
-// ... after gathering all input
-// displaySummary(userOptions);
-//
-// const answer = await inquirer.prompt([
-//     {
-//         type: 'confirm',
-//         name: 'proceed',
-//         message: 'Ready to proceed with the migration?',
-//         default: true
-//     }
-// ]);
-//
-// if (answer.proceed) {
-//     // Begin your migration logic using the options object
-//     await performMigration(userOptions);
-// } else {
-//     console.log("Migration canceled.");
-// }
-
 

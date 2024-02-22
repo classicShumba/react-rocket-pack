@@ -15,7 +15,8 @@ import {
     installViteDependencies,
     removeCRA,
     updatePackageJson,
-    updatingIndexHtml
+    updatingIndexHtml,
+    convertFiles
 } from "./commands.js";
 
 async function performMigration(options) {
@@ -30,10 +31,13 @@ async function performMigration(options) {
             // 3. Create Vite Configuration
             await createViteConfig(options.directory, options.language, options.outputDir);
 
-            // 4 moving index.html
+            // 4. renaming js files with jsx in it to use .jsx
+            await convertFiles(options.directory, options.language)
+
+            // 5. moving index.html
             await updatingIndexHtml(options.directory, options.mainFile)
 
-            // 5. updating package.json
+            // 6. updating package.json
             await updatePackageJson(options.directory, options.language, options.installVitest);
         }
         console.log("🎉🎉 Migration Complete! Your project is ready to rock with Vite!")

@@ -20,7 +20,7 @@ export async function removeCRA(ProjPath) {
 export async function installViteDependencies(ProjPath, language, installVitest) {
     console.log("📦✨ Fetching the essential Vite packages...");
 
-    let dependencies = 'vite @vitejs/plugin-react-swc @vitejs/plugin-react vite-tsconfig-paths vite-plugin-svgr';
+    let dependencies = 'vite browserslist-to-esbuild @vitejs/plugin-react vite-tsconfig-paths vite-plugin-svgr';
 
     // TypeScript-specific dependencies
     if (language === 'ts') {
@@ -68,12 +68,12 @@ export async function createViteConfig(directory, language, outputDir) {
     let imports;
     if (language === 'ts') {
         configFilename = 'vite.config.ts';
-        imports = "import { defineConfig } from 'vite';\n import react from '@vitejs/plugin-react';\n import viteTsconfigPaths from 'vite-tsconfig-paths';"
+        imports = "import { defineConfig } from 'vite';\n import react from '@vitejs/plugin-react';\n import viteTsconfigPaths from 'vite-tsconfig-paths';\n import browserslistToEsbuild from 'browserslist-to-esbuild';"
         plugins = "[react(), viteTsconfigPaths()]"
     } else {
         configFilename = 'vite.config.js'
-        imports = "import { defineConfig } from 'vite';\n import react from '@vitejs/plugin-react';"
-        plugins = "[react()]"
+        imports = "import { defineConfig } from 'vite';\n import react from '@vitejs/plugin-react';\n import viteTsconfigPaths from 'vite-tsconfig-paths';\n import browserslistToEsbuild from 'browserslist-to-esbuild';"
+        plugins = "[react(), viteTsconfigPaths()]"
     }
     const configFilePath = path.join(directory, configFilename);
 
@@ -81,61 +81,90 @@ export async function createViteConfig(directory, language, outputDir) {
             ${imports}
             
             // https://vitejs.dev/config/
-            export default defineConfig(() => {
-              return {
-                build: {
-                  outDir: '${outputDir}', // Default output directory for production build
+            export default defineConfig({
+                plugins: ${plugins},
+                server: {
+                    // this ensures that the browser opens upon server start
+                    open: true,
+                    // this sets a default port to 3000
+                    port: 3000,
                 },
                 esbuild: {
-                    loader:  { '.js': 'jsx' }, // Tell esbuild to handle .js files as JSX 
+                    loader:  'jsx', // Tell esbuild to handle .js files as JSX 
                 },
-                plugins: ${plugins},
-              };
+                build: {
+                    // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
+                    target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
+                    outDir: '${outputDir}', // Default output directory for production build
+                },
             });
             ` :
         `
         ${imports}
-        
+            
         // https://vitejs.dev/config/
         export default defineConfig({
-            plugins: ${plugins},
-            build: {
-                outDir: ${outputDir}, // Default output directory for production build
+           plugins: ${plugins},
+            server: {
+                // this ensures that the browser opens upon server start
+                open: true,
+                // this sets a default port to 3000
+                port: 3000,
             },
             esbuild: {
-                loader:  { '.ts': 'tsx' }, // Tell esbuild to handle .ts files as TSX 
+                loader:  'jsx', // Tell esbuild to handle .js files as JSX 
+            },
+            build: {
+                // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
+                target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
+                outDir: '${outputDir}', // Default output directory for production build
             },
         });
         `
 
     // for typescript user option
     const tsconfigFilePath = path.join(directory, 'tsconfig.ts')
+    const viteEnvPath = path.join(directory, 'vite-env.d.ts')
 
-    const tsconfigContent = `
-        {
+    const tsconfigContent =
+        `{
           "compilerOptions": {
             "target": "ESNext",
-            "lib": ["DOM", "DOM.Iterable", "ESNext"],
+            "lib": [
+              "dom",
+              "dom.iterable",
+              "esnext"
+            ],
+            "types": ["vite/client"],
             "allowJs": true,
-            "skipLibCheck": true, 
+            "skipLibCheck": true,
             "esModuleInterop": true,
             "allowSyntheticDefaultImports": true,
-            "strict": true,              
+            "strict": true,
             "forceConsistentCasingInFileNames": true,
-            "module": "ESNext",           
-            "moduleResolution": "node",  
-            "resolveJsonModule": true,   
-            "isolatedModules": true,     
-            "jsx": "react-jsx"           
+            "noFallthroughCasesInSwitch": true,
+            "module": "esnext",
+            "moduleResolution": "node",
+            "resolveJsonModule": true,
+            "isolatedModules": true,
+            "noEmit": true,
+            "jsx": "react-jsx"
           },
-          "include": ["src"]            
+          "include": [
+            "src"
+          ]
         }
     `
+
+    const viteEnvConfigContent = `/// <reference types="vite/client" />`
+
 
     try {
         console.log("📄 Generating your Vite configuration...")
         fs.writeFileSync(configFilePath, configContent);
         language === 'ts' ? fs.writeFileSync(tsconfigFilePath, tsconfigContent) : null
+        language === 'ts' ? fs.writeFileSync(viteEnvPath, viteEnvConfigContent) : null
+
         console.log(`✅✅ Created ${configFilename} successfully!`);
     } catch (error) {
         console.error(`Error creating ${configFilename}:`, error);
@@ -143,25 +172,69 @@ export async function createViteConfig(directory, language, outputDir) {
     }
 }
 
+export async function convertFiles(projectRoot, language = 'js') { // Default to JavaScript
+    function recursiveFileSearch(dir) {
+        const results = [];
+        fs.readdirSync(dir).forEach(item => {
+            const itemPath = path.join(dir, item);
+
+            if (fs.lstatSync(itemPath).isDirectory()) {
+                if (item !== 'node_modules') {
+                    results.push(...recursiveFileSearch(itemPath));
+                }
+            } else if (path.extname(itemPath) === `.${language}`) {
+                results.push(itemPath);
+            }
+        });
+        return results;
+    }
+
+    const files = recursiveFileSearch(projectRoot);
+
+    files.forEach(filePath => {
+        try {
+            const newFilePath = filePath.replace(/\.js$/, `.${language}x`);
+            fs.renameSync(filePath, newFilePath);  // Use rename for efficiency
+            console.log(`Renamed ${filePath} to ${newFilePath}`);
+        } catch (error) {
+            console.error(`Error renaming ${filePath}:`, error);
+        }
+    });
+
+    console.log('✅✅ File renaming completed');
+}
+
+
 // adjusting the index.html
 export async function updatingIndexHtml(projectPath, mainFile) {
     console.log("↪️🗂 Updating index.html file ↪️🗂")
     const srcIndexHtml = path.join(projectPath, 'public', 'index.html');
     const destIndexHtml = path.join(projectPath, 'index.html');
+
+    if (mainFile === 'index.js'){
+        mainFile = 'index.jsx'
+    } else if (mainFile === 'main.js') {
+        mainFile = 'main.jsx'
+    } else if (mainFile === 'main.ts') {
+        mainFile = 'main.jsx'
+    } else if (mainFile === 'index.ts') {
+        mainFile = 'index.tsx'
+    }
+
     try {
         // Reading contents
         const content = fs.readFileSync(srcIndexHtml, {encoding: "utf-8"});
         let updatedContent = content.replace(/%PUBLIC_URL%/g, '');
 
-        // Updating content #TODO more robust parsing might be needed)
-        const scriptTagRegex = /<script.*<\/script>/i;
+        // Updating content # TODO more robust parsing might be needed
+        const scriptTagRegex = /(<script.*<\/script>)(?=<\/body>)/i;
         updatedContent = scriptTagRegex.test(content) ?
             updatedContent = updatedContent.replace(scriptTagRegex,
                 (match) => `<noscript>${match}</noscript>` + // Preserve noscript if found
                     `<script type="module" src="/src/${mainFile}"></script>`
             ) :
             updatedContent.replace(/<\/body>/,
-                `<script type="module" src="/src/${mainFile}"></script></body>`
+                `<script type="module" src="/src/${mainFile}"></script>\n</body>`
             );
         // Writing the updated file
         fs.writeFileSync(destIndexHtml, updatedContent);
