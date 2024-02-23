@@ -78,6 +78,18 @@ export async function getUserOutputDirectory() {
     return answer.outputDir;
 }
 
+export async function getServerPort() {
+    const answer = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'serverPort',
+            message: 'Enter the desired dev server port (default is "5173"):',
+            default: '5173'
+        }
+    ]);
+    return answer.serverPort;
+}
+
 // querying whether the user needs test package from vitest
 export async function confirmVitestInstallation() {
     const answer = await inquirer.prompt([
@@ -97,6 +109,7 @@ export const userOptions = {
     language: null,
     mainFile: null,
     outputDir: null,
+    serverPort: null,
     installVitest: null,
 };
 
@@ -109,6 +122,7 @@ export function displaySummary(options) {
     console.log(`Language: ${options.language}`);
     console.log(`Main React File: ${options.mainFile}`);
     console.log(`Desired Output Directory for Production: ${options.outputDir}`);
+    console.log(`Desired Dev Server Port: ${options.serverPort}`);
     console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}\n`);
 }
 

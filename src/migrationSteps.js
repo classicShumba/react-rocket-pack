@@ -7,6 +7,7 @@ import {
     getMainReactFile,
     getUserOutputDirectory,
     getProjectName,
+    getServerPort,
     userOptions,
     displaySummary
 } from "./userInputs.js";
@@ -29,7 +30,7 @@ async function performMigration(options) {
             await installViteDependencies(options.directory, options.language);
 
             // 3. Create Vite Configuration
-            await createViteConfig(options.directory, options.language, options.outputDir);
+            await createViteConfig(options.directory, options.language, options.outputDir, options.serverPort);
 
             // 4. renaming js files with jsx in it to use .jsx
             await convertFiles(options.directory, options.language)
@@ -54,6 +55,7 @@ export async function gatherInputsAndMigrate() {
     userOptions.language = await determineLanguage();
     userOptions.mainFile = await getMainReactFile();
     userOptions.outputDir = await getUserOutputDirectory();
+    userOptions.serverPort = await getServerPort();
     userOptions.installVitest = await confirmVitestInstallation();
 
     // displaying user's selected options

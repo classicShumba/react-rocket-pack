@@ -61,11 +61,50 @@ export async function installViteDependencies(ProjPath, language, installVitest)
     console.log("⚡️✨✨ Installed all dependencies successfully ✨✨⚡️\n");
 }
 
+export async function convertFiles(projectRoot, language = 'js') { // Default to JavaScript
+    function recursiveFileSearch(dir) {
+        const results = [];
+        const language = 'js'
+        fs.readdirSync(dir).forEach(item => {
+            const itemPath = path.join(dir, item);
 
-export async function createViteConfig(directory, language, outputDir) {
+            if (fs.lstatSync(itemPath).isDirectory()) {
+                if (item !== 'node_modules') {
+                    results.push(...recursiveFileSearch(itemPath));
+                }
+            } else if (path.extname(itemPath) === `.${language}`) {
+                const endIndex = itemPath.lastIndexOf('.')
+                const removeExt = itemPath.slice(0, endIndex)
+                if (path.extname(removeExt) === '' ){
+                    results.push(itemPath);
+                }
+            }
+        });
+        return results;
+    }
+
+    const files = recursiveFileSearch(projectRoot);
+
+    files.forEach(filePath => {
+        try {
+            const newFilePath = filePath.replace(/\.js$/, `.${language}x`);
+            fs.renameSync(filePath, newFilePath);  // Use rename for efficiency
+
+            console.log(`Renamed ${filePath} to ${newFilePath}`);
+        } catch (error) {
+            console.error(`Error renaming ${filePath}:`, error);
+        }
+    });
+
+    console.log('✅✅ File renaming completed');
+}
+
+
+export async function createViteConfig(directory, language, outputDir, port) {
     let configFilename;
     let plugins;
     let imports;
+    
     if (language === 'ts') {
         configFilename = 'vite.config.ts';
         imports = "import { defineConfig } from 'vite';\n import react from '@vitejs/plugin-react';\n import viteTsconfigPaths from 'vite-tsconfig-paths';\n import browserslistToEsbuild from 'browserslist-to-esbuild';"
@@ -76,51 +115,47 @@ export async function createViteConfig(directory, language, outputDir) {
         plugins = "[react(), viteTsconfigPaths()]"
     }
     const configFilePath = path.join(directory, configFilename);
+    let server;
+    if (port) {
+        server = `server: {
+    // this ensures that the browser opens upon server start
+    open: true,
+    // this sets a default port to ${port}
+    port: ${port},
+},`
+    }
 
-    const configContent = language === 'js' ? `
-            ${imports}
-            
-            // https://vitejs.dev/config/
-            export default defineConfig({
-                plugins: ${plugins},
-                server: {
-                    // this ensures that the browser opens upon server start
-                    open: true,
-                    // this sets a default port to 3000
-                    port: 3000,
-                },
-                esbuild: {
-                    loader:  'jsx', // Tell esbuild to handle .js files as JSX 
-                },
-                build: {
-                    // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
-                    target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
-                    outDir: '${outputDir}', // Default output directory for production build
-                },
-            });
-            ` :
-        `
-        ${imports}
-            
-        // https://vitejs.dev/config/
-        export default defineConfig({
-           plugins: ${plugins},
-            server: {
-                // this ensures that the browser opens upon server start
-                open: true,
-                // this sets a default port to 3000
-                port: 3000,
-            },
-            esbuild: {
-                loader:  'jsx', // Tell esbuild to handle .js files as JSX 
-            },
-            build: {
-                // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
-                target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
-                outDir: '${outputDir}', // Default output directory for production build
-            },
-        });
-        `
+    const configContent = language === 'js' ? 
+        `${imports}
+
+// https://vitejs.dev/config/
+export default defineConfig({
+    plugins: ${plugins},
+    ${server}
+    esbuild: {
+        loader:  'jsx', // Tell esbuild to handle .js files as JSX 
+    },
+    build: {
+        // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
+        target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
+        outDir: '${outputDir}', // Default output directory for production build
+    },
+});
+            ` : `${imports}
+    
+// https://vitejs.dev/config/
+export default defineConfig({
+    plugins: ${plugins},
+    ${server}
+    esbuild: {
+        loader:  'jsx', // Tell esbuild to handle .js files as JSX 
+    },
+    build: {
+        // --> ["chrome79", "edge92", "firefox91", "safari13.1"]
+        target: browserslistToEsbuild(['>0.2%', 'not dead', 'not op_mini all']),
+        outDir: '${outputDir}', // Default output directory for production build
+    },
+});`
 
     // for typescript user option
     const tsconfigFilePath = path.join(directory, 'tsconfig.ts')
@@ -128,33 +163,32 @@ export async function createViteConfig(directory, language, outputDir) {
 
     const tsconfigContent =
         `{
-          "compilerOptions": {
-            "target": "ESNext",
-            "lib": [
-              "dom",
-              "dom.iterable",
-              "esnext"
-            ],
-            "types": ["vite/client"],
-            "allowJs": true,
-            "skipLibCheck": true,
-            "esModuleInterop": true,
-            "allowSyntheticDefaultImports": true,
-            "strict": true,
-            "forceConsistentCasingInFileNames": true,
-            "noFallthroughCasesInSwitch": true,
-            "module": "esnext",
-            "moduleResolution": "node",
-            "resolveJsonModule": true,
-            "isolatedModules": true,
-            "noEmit": true,
-            "jsx": "react-jsx"
-          },
-          "include": [
-            "src"
-          ]
-        }
-    `
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "types": ["vite/client"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src"
+  ]
+}`
 
     const viteEnvConfigContent = `/// <reference types="vite/client" />`
 
@@ -170,38 +204,6 @@ export async function createViteConfig(directory, language, outputDir) {
         console.error(`Error creating ${configFilename}:`, error);
         throw error
     }
-}
-
-export async function convertFiles(projectRoot, language = 'js') { // Default to JavaScript
-    function recursiveFileSearch(dir) {
-        const results = [];
-        fs.readdirSync(dir).forEach(item => {
-            const itemPath = path.join(dir, item);
-
-            if (fs.lstatSync(itemPath).isDirectory()) {
-                if (item !== 'node_modules') {
-                    results.push(...recursiveFileSearch(itemPath));
-                }
-            } else if (path.extname(itemPath) === `.${language}`) {
-                results.push(itemPath);
-            }
-        });
-        return results;
-    }
-
-    const files = recursiveFileSearch(projectRoot);
-
-    files.forEach(filePath => {
-        try {
-            const newFilePath = filePath.replace(/\.js$/, `.${language}x`);
-            fs.renameSync(filePath, newFilePath);  // Use rename for efficiency
-            console.log(`Renamed ${filePath} to ${newFilePath}`);
-        } catch (error) {
-            console.error(`Error renaming ${filePath}:`, error);
-        }
-    });
-
-    console.log('✅✅ File renaming completed');
 }
 
 
@@ -267,6 +269,10 @@ export async function updatePackageJson(projPath, language, installVitest) {
         if (installVitest) {
             packageJson.scripts.test = language === 'ts' ? 'vitest' : 'vitest run';
         }
+
+        // fixing CJS Build error for Vite's Node API
+        // adding type to module
+        packageJson.type = "module";
 
         // Write the updated package.json
         fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
