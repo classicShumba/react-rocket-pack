@@ -1,4 +1,4 @@
-# react-rocket-pack
+# vite-shift
 
 Your smooth migration path from CRA to Vite
 
@@ -16,7 +16,7 @@ react-rocket-pack automates the core migration tasks, saving you time and ensuri
 
 ## Installation
 
-`npm install react-rocket-pack`
+`npm install vite-shift`
 
 ## Usage
 
