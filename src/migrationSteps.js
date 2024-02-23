@@ -1,17 +1,23 @@
+import inquirer from "inquirer";
 import {
     confirmMigration,
     confirmVitestInstallation,
     determineLanguage,
     getDirectory,
     getMainReactFile,
-    getProjectName
+    getUserOutputDirectory,
+    getProjectName,
+    getServerPort,
+    userOptions,
+    displaySummary
 } from "./userInputs.js";
 import {
     createViteConfig,
     installViteDependencies,
     removeCRA,
     updatePackageJson,
-    updatingIndexHtml
+    updatingIndexHtml,
+    convertFiles
 } from "./commands.js";
 
 async function performMigration(options) {
@@ -24,12 +30,15 @@ async function performMigration(options) {
             await installViteDependencies(options.directory, options.language);
 
             // 3. Create Vite Configuration
-            await createViteConfig(options.directory, options.language);
+            await createViteConfig(options.directory, options.language, options.outputDir, options.serverPort);
 
-            // 4 moving index.html
+            // 4. renaming js files with jsx in it to use .jsx
+            await convertFiles(options.directory, options.language)
+
+            // 5. moving index.html
             await updatingIndexHtml(options.directory, options.mainFile)
 
-            // 5. updating package.json
+            // 6. updating package.json
             await updatePackageJson(options.directory, options.language, options.installVitest);
         }
         console.log("🎉🎉 Migration Complete! Your project is ready to rock with Vite!")
@@ -41,11 +50,19 @@ async function performMigration(options) {
 
 
 export async function gatherInputsAndMigrate() {
-    const projectName = await getProjectName();
-    const directory = await getDirectory();
-    const language = await determineLanguage();
-    const mainFile = await getMainReactFile();
-    const installVitest = await confirmVitestInstallation();
+    userOptions.projectName = await getProjectName();
+    userOptions.directory = await getDirectory();
+    userOptions.language = await determineLanguage();
+    userOptions.mainFile = await getMainReactFile();
+    userOptions.outputDir = await getUserOutputDirectory();
+    userOptions.serverPort = await getServerPort();
+    userOptions.installVitest = await confirmVitestInstallation();
 
-    await performMigration({projectName, language, directory, mainFile, installVitest});
+    // displaying user's selected options
+    const options = userOptions
+
+    displaySummary(options)
+
+    await performMigration(options)
+
 }

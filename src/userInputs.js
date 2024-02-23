@@ -66,6 +66,30 @@ export async function getMainReactFile() {
     return answer.mainFile;
 }
 
+export async function getUserOutputDirectory() {
+    const answer = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'outputDir',
+            message: 'Enter the desired output directory (default is "build"):',
+            default: 'build'
+        }
+    ]);
+    return answer.outputDir;
+}
+
+export async function getServerPort() {
+    const answer = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'serverPort',
+            message: 'Enter the desired dev server port (default is "5173"):',
+            default: '5173'
+        }
+    ]);
+    return answer.serverPort;
+}
+
 // querying whether the user needs test package from vitest
 export async function confirmVitestInstallation() {
     const answer = await inquirer.prompt([
@@ -79,45 +103,26 @@ export async function confirmVitestInstallation() {
     return answer.installVitest;
 }
 
+export const userOptions = {
+    projectName: null,
+    directory: null,
+    language: null,
+    mainFile: null,
+    outputDir: null,
+    serverPort: null,
+    installVitest: null,
+};
 
-// # TODO yet to implement user choice summary
-// const userOptions = {
-//     projectName: null,
-//     directory: null,
-//     language: null,
-//     installVitest: null,
-// };
-//
-// // ... Inside input functions
-// userOptions.projectName = await getProjectName();
-// userOptions.language = await determineLanguage();
-// userOptions.installVitest = await confirmVitestInstallation();
 
-// function displaySummary(options) {
-//     console.log("\n--- Migration Summary ---");
-//     console.log(`Project Name: ${options.projectName}`);
-//     console.log(`Project Directory: ${options.directory}`);
-//     console.log(`Language: ${options.language}`);
-//     console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}`);
-// }
 
-// ... after gathering all input
-// displaySummary(userOptions);
-//
-// const answer = await inquirer.prompt([
-//     {
-//         type: 'confirm',
-//         name: 'proceed',
-//         message: 'Ready to proceed with the migration?',
-//         default: true
-//     }
-// ]);
-//
-// if (answer.proceed) {
-//     // Begin your migration logic using the options object
-//     await performMigration(userOptions);
-// } else {
-//     console.log("Migration canceled.");
-// }
-
+export function displaySummary(options) {
+    console.log("\n--- Migration Summary ---");
+    console.log(`Project Name: ${options.projectName}`);
+    console.log(`Project Directory: ${options.directory}`);
+    console.log(`Language: ${options.language}`);
+    console.log(`Main React File: ${options.mainFile}`);
+    console.log(`Desired Output Directory for Production: ${options.outputDir}`);
+    console.log(`Desired Dev Server Port: ${options.serverPort}`);
+    console.log(`Install Vitest: ${options.installVitest ? 'Yes' : 'No'}\n`);
+}
 
