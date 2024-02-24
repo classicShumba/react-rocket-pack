@@ -1,5 +1,5 @@
 {
-  "name": "react-rocket-pack",
+  "name": "vite-shift",
   "version": "1.0.0",
   "description": "This tool aids in migrating from Create-react-app to Vite",
   "type": "module",
