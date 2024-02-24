@@ -3,17 +3,26 @@
   "version": "1.0.0",
   "description": "This tool aids in migrating from Create-react-app to Vite",
   "type": "module",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/classicShumba/vite-shift.git"
+  },
   "keywords": [
     "create-react-app",
-    "vite"
+    "vite",
+    "vite-shift"
   ],
   "author": "classic_shumba",
   "license": "MIT",
   "dependencies": {
     "inquirer": "^9.2.15"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/classicShumba/vite-shift/issues"
+  },
+  "homepage": "https://github.com/classicShumba/vite-shift"
 }
