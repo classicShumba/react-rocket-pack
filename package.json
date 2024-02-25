@@ -1,6 +1,6 @@
 {
   "name": "@classic_shumba/vite-shift",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This tool aids in migrating from Create-react-app to Vite",
   "type": "module",
   "main": "index.js",

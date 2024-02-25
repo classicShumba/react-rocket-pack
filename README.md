@@ -14,7 +14,7 @@
 Install 'vite-shift' globally:
 
 ```bash
-npm install -g vite-shift
+npm install -g @classic_shumba/vite-shift
 vite-shift
 ```
 ## Usage
@@ -22,7 +22,7 @@ vite-shift
 2. **Initiate:** Run the following command:
 
 ```bash
-vite-shift
+npx vite-shift
 ```
 3. Guide Your Migration: Follow the interactive prompts to tailor the migration process to your project's needs.
 
